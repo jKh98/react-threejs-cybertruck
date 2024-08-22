@@ -1,4 +1,4 @@
-import { Shape, ExtrudeGeometry, Box3, Mesh } from "three";
+import { Shape, ExtrudeGeometry, Box3, BufferAttribute } from "three";
 import {
   TEXTURES,
   LOOP_SIZE,
@@ -9,24 +9,9 @@ import {
   STREET_INNER_DEPTH,
 } from "../config";
 import TexturedMesh from "./TexturedMesh";
-import { forwardRef, useImperativeHandle, useRef } from "react";
-
-export interface StreetProps {
-  innerRef: React.MutableRefObject<Box3 | undefined>;
-  outerRef: React.MutableRefObject<Box3 | undefined>;
-}
+import { forwardRef, useImperativeHandle } from "react";
 
 const Street = forwardRef((_, ref) => {
-  const outerRef = useRef<Mesh>(null);
-  const innerRef = useRef<Mesh>(null);
-
-  useImperativeHandle(ref, () => ({
-    getOuterBoundingBox: () =>
-      outerRef.current?.geometry?.boundingBox || new Box3(),
-    getInnerBoundingBox: () =>
-      innerRef.current?.geometry?.boundingBox || new Box3(),
-  }));
-
   const createTrackShape = (
     width: number,
     height: number,
@@ -128,7 +113,6 @@ const Street = forwardRef((_, ref) => {
 
   const outerGeometry = new ExtrudeGeometry(outerShape, {
     depth: STREET_DEPTH,
-
     bevelEnabled: true,
   });
 
@@ -137,18 +121,26 @@ const Street = forwardRef((_, ref) => {
     bevelEnabled: true,
   });
 
+  // Rotate the geometry to align with the car
+  outerGeometry.rotateX(-Math.PI / 2);
+  innerGeometry.rotateX(-Math.PI / 2);
+
+  const outerBoundingBox = new Box3().setFromBufferAttribute(
+    outerGeometry.attributes.position as BufferAttribute
+  );
+  const innerBoundingBox = new Box3().setFromBufferAttribute(
+    innerGeometry.attributes.position as BufferAttribute
+  );
+
+  useImperativeHandle(ref, () => ({
+    getOuterBoundingBox: () => outerBoundingBox,
+    getInnerBoundingBox: () => innerBoundingBox,
+  }));
+
   return (
     <>
-      <TexturedMesh
-        ref={outerRef}
-        geometry={outerGeometry}
-        textureUrls={TEXTURES.tiles}
-      />
-      <TexturedMesh
-        ref={innerRef}
-        geometry={innerGeometry}
-        textureUrls={TEXTURES.grass}
-      />
+      <TexturedMesh geometry={outerGeometry} textureUrls={TEXTURES.tiles} />
+      <TexturedMesh geometry={innerGeometry} textureUrls={TEXTURES.grass} />
     </>
   );
 });

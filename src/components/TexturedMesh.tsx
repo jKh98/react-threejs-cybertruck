@@ -1,6 +1,6 @@
 import { useTexture } from "@react-three/drei";
-import { Box3, ExtrudeGeometry, Mesh, MeshPhysicalMaterial } from "three";
-import { forwardRef, useImperativeHandle, useRef } from "react";
+import { ExtrudeGeometry, MeshPhysicalMaterial, RepeatWrapping } from "three";
+import { forwardRef } from "react";
 
 export interface TexturedMeshProps {
   geometry: ExtrudeGeometry;
@@ -14,20 +14,16 @@ export interface TexturedMeshProps {
 }
 
 const TexturedMesh = forwardRef(
-  ({ geometry, textureUrls }: TexturedMeshProps, ref) => {
+  ({ geometry, textureUrls }: TexturedMeshProps) => {
     const { map, displacementMap, normalMap, roughnessMap, aoMap } = useTexture(
       { ...textureUrls }
     );
 
-    const meshRef = useRef<Mesh>(null);
-
-    // Expose bounding box to parent
-    useImperativeHandle(ref, () => ({
-      getBoundingBox: () => {
-        const box = new Box3().setFromObject(meshRef.current!);
-        return box;
-      },
-    }));
+    // Adjusting UV wrapping and tiling
+    map.wrapS = map.wrapT = RepeatWrapping;
+    map.repeat.set(0.25, 0.25); // Adjust tiling
+    displacementMap.wrapS = displacementMap.wrapT = RepeatWrapping;
+    displacementMap.repeat.set(10, 10); // Adjust tiling
 
     // Configure the material
     const material = new MeshPhysicalMaterial({
@@ -36,14 +32,14 @@ const TexturedMesh = forwardRef(
       displacementMap,
       normalMap,
       roughnessMap,
-      displacementScale: 0.1,
-      roughness: 0.5, // Adjust roughness
-      metalness: 0.5, // Adjust metalness
+      displacementScale: 0, // Fine-tune displacement scale
+      roughness: 0.5, // Lower roughness for a shinier appearance
+      metalness: 0.5, // Lower metalness for less metallic look
+      clearcoat: 1.0, // Add clearcoat for a glossy effect
+      clearcoatRoughness: 0.4, // Adjust clearcoat roughness,
     });
 
-    return (
-      <mesh geometry={geometry} material={material} rotation-x={-Math.PI / 2} />
-    );
+    return <mesh geometry={geometry} material={material} />;
   }
 );
 

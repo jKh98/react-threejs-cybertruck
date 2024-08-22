@@ -43,7 +43,7 @@ function App() {
       innerBoundingBox.containsPoint(carRef.current.position)
     ) {
       console.log("Out of bounds");
-      // carRef.current.position.copy(carPosition); // Reset position
+      carRef.current.position.copy(carPosition); // Reset position
     }
 
     // Rotate car only if it is moving
@@ -85,7 +85,7 @@ function App() {
       style={{ width: "100vw", height: "100vh" }}
     >
       <ambientLight intensity={1} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <directionalLight position={[10, 10, 10]} intensity={1} />
       <Street ref={streetRef} />
       <Car ref={carRef} position={INITIAL_CAR_POSITION} />
       <CameraController carRef={carRef} isCarMoving={isCarMoving} />
