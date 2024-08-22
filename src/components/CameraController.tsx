@@ -1,32 +1,38 @@
 import React, { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Object3D } from "three";
+import { Object3D, Vector3 } from "three";
 import { CAMERA_OFFSET } from "../config";
 import { OrbitControls } from "@react-three/drei";
 
 export interface CameraControllerProps {
-  carRef: React.MutableRefObject<Object3D | undefined>;
+  carRef: React.RefObject<Object3D>;
   isCarMoving: boolean;
 }
 
 const CameraController = ({ carRef, isCarMoving }: CameraControllerProps) => {
   const { camera, gl } = useThree();
-  const cameraOffset = useRef(CAMERA_OFFSET);
-
+  const cameraOffset = useRef(new Vector3(...CAMERA_OFFSET));
   const controlsRef = useRef(null);
 
-  // optimize the camera movement
   useFrame(() => {
     if (carRef.current) {
       const carPosition = carRef.current.position.clone();
-      const desiredPosition = carPosition.clone().add(cameraOffset.current);
+      const carDirection = new Vector3(0, -0.2, 1)
+        .applyQuaternion(carRef.current.quaternion)
+        .normalize();
+
+      // Calculate the desired camera position relative to the car's direction
+      const desiredPosition = carPosition
+        .clone()
+        .add(carDirection.clone().multiplyScalar(-cameraOffset.current.z))
+        .add(new Vector3(0, cameraOffset.current.y, 0));
 
       // Ensure the camera never goes below the street level (y >= 1 to stay above street level)
       if (desiredPosition.y < 1) {
         desiredPosition.y = 1;
       }
 
-      // Allow rotation around the car when it is stationary
+      // Smooth camera movement when the car is not moving
       if (isCarMoving) {
         camera.position.set(
           desiredPosition.x,
@@ -36,8 +42,11 @@ const CameraController = ({ carRef, isCarMoving }: CameraControllerProps) => {
       } else {
         camera.position.lerp(desiredPosition, 0.1);
       }
+
+      // Make the camera look at the car's current position
       camera.lookAt(carPosition);
 
+      // Enable orbit controls only when the car is stationary
       if (controlsRef.current) {
         controlsRef.current.enabled = !isCarMoving;
       }

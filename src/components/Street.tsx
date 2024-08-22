@@ -1,4 +1,4 @@
-import { Shape, ExtrudeGeometry, Box3, BufferAttribute } from "three";
+import { Shape, ExtrudeGeometry, Vector3 } from "three";
 import {
   TEXTURES,
   LOOP_SIZE,
@@ -10,6 +10,13 @@ import {
 } from "../config";
 import TexturedMesh from "./TexturedMesh";
 import { forwardRef, useImperativeHandle } from "react";
+
+export type StreetRefObject = {
+  checkBounds: (position: Vector3) => {
+    withinOuterBox: boolean;
+    withinInnerBox: boolean;
+  };
+};
 
 const Street = forwardRef((_, ref) => {
   const createTrackShape = (
@@ -113,7 +120,7 @@ const Street = forwardRef((_, ref) => {
 
   const outerGeometry = new ExtrudeGeometry(outerShape, {
     depth: STREET_DEPTH,
-    bevelEnabled: true,
+    bevelEnabled: false,
   });
 
   const innerGeometry = new ExtrudeGeometry(innerShape, {
@@ -125,22 +132,68 @@ const Street = forwardRef((_, ref) => {
   outerGeometry.rotateX(-Math.PI / 2);
   innerGeometry.rotateX(-Math.PI / 2);
 
-  const outerBoundingBox = new Box3().setFromBufferAttribute(
-    outerGeometry.attributes.position as BufferAttribute
-  );
-  const innerBoundingBox = new Box3().setFromBufferAttribute(
-    innerGeometry.attributes.position as BufferAttribute
-  );
+  // Check that the car is within outer bounds and outside inner bounds
+  const checkBounds = (
+    position: Vector3
+  ): {
+    withinOuterBox: boolean;
+    withinInnerBox: boolean;
+  } => {
+    outerGeometry.computeBoundingBox();
+    innerGeometry.computeBoundingBox();
+    outerGeometry.computeBoundingSphere();
+    innerGeometry.computeBoundingSphere();
+
+    const outerBoxBounds = outerGeometry.boundingBox;
+    const innerBoxBounds = innerGeometry.boundingBox;
+    const outerSphereBounds = outerGeometry.boundingSphere;
+    const innerSphereBounds = innerGeometry.boundingSphere;
+
+    if (
+      !outerBoxBounds ||
+      !innerBoxBounds ||
+      !outerSphereBounds ||
+      !innerSphereBounds
+    ) {
+      return { withinOuterBox: false, withinInnerBox: false };
+    }
+
+    const outerBoxContains = outerBoxBounds.containsPoint(position);
+    const innerBoxContains = innerBoxBounds.containsPoint(position);
+
+    const outerSphereContains = outerSphereBounds.containsPoint(position);
+    const innerSphereContains = innerSphereBounds.containsPoint(position);
+
+    const withinOuterBox = outerBoxContains && outerSphereContains;
+    const withinInnerBox = innerBoxContains && innerSphereContains;
+
+    return { withinOuterBox, withinInnerBox };
+  };
 
   useImperativeHandle(ref, () => ({
-    getOuterBoundingBox: () => outerBoundingBox,
-    getInnerBoundingBox: () => innerBoundingBox,
+    checkBounds,
   }));
 
   return (
     <>
-      <TexturedMesh geometry={outerGeometry} textureUrls={TEXTURES.tiles} />
-      <TexturedMesh geometry={innerGeometry} textureUrls={TEXTURES.grass} />
+      <TexturedMesh
+        geometry={outerGeometry}
+        textureUrls={TEXTURES.tiles}
+        materialParams={{
+          displacementScale: 0, // Fine-tune displacement scale
+          roughness: 0.1, // Lower roughness for a shinier appearance
+          metalness: 0.1, // Lower metalness for less metallic look
+        }}
+      />
+      <TexturedMesh
+        geometry={innerGeometry}
+        textureUrls={TEXTURES.grass}
+        materialParams={{
+          displacementScale: 0.1, // Fine-tune displacement scale
+          roughness: 0.5, // Lower roughness for a shinier appearance
+          metalness: 0, // Lower metalness for less metallic look
+        }}
+      />
     </>
   );
 });
