@@ -1,44 +1,57 @@
-// src/components/Car.tsx
-
-import * as THREE from "three";
-import { forwardRef } from "react";
+import { forwardRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { GroupProps, useFrame } from "@react-three/fiber";
 import { CAR_SCALE, INITIAL_CAR_POSITION } from "../config";
+import { Color, Mesh, MeshStandardMaterial } from "three";
 
 type GLTFResult = GLTF & {
   nodes: {
-    steer: THREE.Mesh;
-    interior003: THREE.Mesh;
-    interior003_1: THREE.Mesh;
-    interior003_2: THREE.Mesh;
-    interior003_3: THREE.Mesh;
-    interior003_4: THREE.Mesh;
-    interior003_5: THREE.Mesh;
-    tires: THREE.Mesh;
+    steer: Mesh;
+    interior003: Mesh;
+    interior003_1: Mesh;
+    interior003_2: Mesh;
+    interior003_3: Mesh;
+    interior003_4: Mesh;
+    interior003_5: Mesh;
+    tires: Mesh;
   };
   materials: {
-    ["gray.002"]: THREE.MeshStandardMaterial;
-    ["light_f.002"]: THREE.MeshStandardMaterial;
-    ["body.002"]: THREE.MeshStandardMaterial;
-    glass_crack: THREE.MeshStandardMaterial;
-    ["glassgray.002"]: THREE.MeshStandardMaterial;
-    Light: THREE.MeshStandardMaterial;
-    ["rubber.002"]: THREE.MeshStandardMaterial;
+    ["gray.002"]: MeshStandardMaterial;
+    ["light_f.002"]: MeshStandardMaterial;
+    ["body.002"]: MeshStandardMaterial;
+    glass_crack: MeshStandardMaterial;
+    ["glassgray.002"]: MeshStandardMaterial;
+    Light: MeshStandardMaterial;
+    ["rubber.002"]: MeshStandardMaterial;
   };
 };
 
-const Car = forwardRef<THREE.Group<THREE.Object3DEventMap>>(
-  (props: GroupProps, ref) => {
+const Car = forwardRef(
+  (props: GroupProps & { speed: number; isReversing: boolean }, ref) => {
+    const { speed, isReversing } = props;
     const { nodes, materials } = useGLTF(
       "https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/cybertruck/model.gltf"
     ) as GLTFResult;
 
+    // Wheel rotation animation
+    useFrame(() => {
+      const wheelRotation = speed * 0.05; // Adjust the multiplier for realistic rotation
+      nodes.tires.rotation.x -= wheelRotation;
+    });
+
+    // Headlights logic
+    useEffect(() => {
+      if (isReversing || speed === 0) {
+        materials.Light.emissive = new Color(0xffffff); // Turn on lights
+      } else {
+        materials.Light.emissive = new Color(0x000000); // Turn off lights
+      }
+    }, [speed, isReversing, materials.Light]);
+
     return (
       <group
         ref={ref}
-        {...props}
         position={INITIAL_CAR_POSITION}
         scale={CAR_SCALE}
         rotation={[0, Math.PI, 0]}

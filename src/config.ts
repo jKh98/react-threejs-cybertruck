@@ -1,22 +1,20 @@
 import { Vector3 } from "three";
 
-export const LOOP_SIZE = 200; // Adjust to your preferred loop size
-export const STREET_WIDTH = 15; // Width of the street
-export const CORNER_RADIUS = 20; // Outer corner radius
-export const INNER_CORNER_RADIUS = 25; // Inner corner radius (smaller than outer)
-export const STREET_DEPTH = -0.2; // Depth of the street
-export const STREET_INNER_DEPTH = -0.2; // Depth of the inner street
-export const CAR_SCALE: [number, number, number] = [0.75, 0.75, 0.75];
+export const LAYOUT_SIZE = 1000; // Adjust to your preferred loop size
+export const LAYOUT_DEPTH = -0.1;
+export const BOUNDARY_DEPTH = -0.2;
+export const OUTERSIDE_DEPTH = -0.5;
+
+export const CAR_SCALE: [number, number, number] = [1, 1, 1];
 export const CAMERA_OFFSET = new Vector3(0, 5, 10);
-export const INITIAL_CAR_POSITION: [number, number, number] = [2.5, 0, -15];
-export const CAR_SPEED = 0.1;
-export const ACCELERATION = 0.005;
-export const MAX_SPEED = 1;
-export const BUMP_DECELERATION = 0.1;
-export const BRAKE_DECELERATION = 0.01;
-export const TURN_DELAY = 500; // milliseconds
-export const TURN_ANGLE = Math.PI / 2; // 90 degrees
-export const TURN_STEP = Math.PI / 180; // 1 degree
+export const INITIAL_CAR_POSITION: [number, number, number] = [0, 0, 0];
+
+export const ACCELERATION = 0.02; // Increased for a more responsive acceleration
+export const MAX_SPEED = 2; // Increased to allow for faster movement
+export const BRAKE_DECELERATION = 0.03; // Increased to provide more effective braking
+export const MIN_SPEED_TO_TURN = 0.02; // Slightly increased to ensure turns only happen when the car is moving
+export const FRICTION = 0.005; // Increased to add more natural deceleration when keys are not pressed
+export const TURN_STEP = Math.PI / 90; // Increased for sharper turns, especially at lower speeds
 
 // Texture URLs
 export const TEXTURES = {

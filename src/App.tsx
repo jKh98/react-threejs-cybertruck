@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import Car from "./components/Car";
-import Street, { StreetRefObject } from "./components/Street";
+import Layout, { LayoutRefObject } from "./components/Layout";
 import CameraController from "./components/CameraController";
 import { Group, Object3DEventMap } from "three";
 import CarController from "./components/CarController";
@@ -9,7 +9,7 @@ import { Environment } from "@react-three/drei";
 
 function App() {
   const carRef = useRef<Group<Object3DEventMap>>(null);
-  const streetRef = useRef<StreetRefObject>(null);
+  const layoutRef = useRef<LayoutRefObject>(null);
 
   const [isCarMoving, setIsCarMoving] = useState(false);
 
@@ -19,12 +19,12 @@ function App() {
       <directionalLight position={[5, 5, 5]} intensity={1} />
       <Environment preset="night" />
 
-      <Street ref={streetRef} />
+      <Layout ref={layoutRef} />
       <Car ref={carRef} />
       <CameraController carRef={carRef} isCarMoving={isCarMoving} />
       <CarController
         carRef={carRef}
-        streetRef={streetRef}
+        layoutRef={layoutRef}
         setIsCarMoving={setIsCarMoving}
       />
     </Canvas>
